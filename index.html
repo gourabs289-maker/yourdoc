@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>YourDoc — Rich Text to PDF</title>
 
+  <!-- Clean Web Font with Light (300), Regular (400), and Bold (700) weights -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet" />
+
   <!-- Quill Editor CSS -->
   <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" />
 
@@ -13,9 +18,10 @@
 
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       background: #eef1f5;
       color: #1f2937;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* Top App Header */
@@ -25,19 +31,19 @@
       z-index: 100;
       background: #ffffff;
       border-bottom: 1px solid #d1d5db;
-      padding: 12px 20px;
+      padding: 10px 16px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     }
 
     .brand-group {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
@@ -49,22 +55,20 @@
     }
 
     .doc-input {
-      padding: 8px 12px;
+      padding: 7px 10px;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       font-size: 14px;
       outline: none;
-      min-width: 190px;
+      width: 175px;
     }
 
-    .doc-input:focus {
-      border-color: #2563eb;
-    }
+    .doc-input:focus { border-color: #2563eb; }
 
     .actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
@@ -81,7 +85,7 @@
       background: #2563eb;
       color: #ffffff;
       border: none;
-      padding: 10px 18px;
+      padding: 9px 16px;
       border-radius: 6px;
       font-size: 14px;
       font-weight: 600;
@@ -92,10 +96,10 @@
     .btn-pdf:hover { background: #1d4ed8; }
     .btn-pdf:disabled { background: #93c5fd; cursor: wait; }
 
-    /* Toolbar + Footer Controls Bar */
+    /* Toolbar + Date & Footer Controls */
     .controls-wrapper {
       position: sticky;
-      top: 63px;
+      top: 57px;
       z-index: 90;
       background: #f8fafc;
       border-bottom: 1px solid #d1d5db;
@@ -108,32 +112,63 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      padding: 8px 12px !important;
+      padding: 8px 10px !important;
     }
 
-    .footer-bar {
+    .meta-bar {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 8px 16px;
+      gap: 14px;
+      padding: 8px 14px;
       font-size: 13px;
       color: #374151;
       flex-wrap: wrap;
     }
 
-    .footer-bar input {
-      width: 280px;
-      max-width: 100%;
+    .meta-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .meta-field input {
       padding: 6px 10px;
       border: 1px solid #cbd5e1;
       border-radius: 5px;
       font-size: 13px;
+      outline: none;
+    }
+
+    .meta-field input:focus { border-color: #2563eb; }
+
+    #doc-date { width: 145px; }
+    #author-footer { width: 230px; max-width: 100%; }
+
+    .btn-today {
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-today:hover { background: #dbeafe; }
+
+    /* Give mobile users more typing space when keyboard is open */
+    @media (max-width: 640px) {
+      .topbar, .controls-wrapper {
+        position: static;
+      }
     }
 
     /* Workspace & A4 Page Simulation */
     .workspace {
-      padding: 28px 16px 60px;
+      padding: 24px 12px 60px;
       display: flex;
       justify-content: center;
       overflow-x: auto;
@@ -141,14 +176,14 @@
 
     .paper-stage {
       position: relative;
-      width: 794px; /* Standard A4 width at 96 DPI */
-      min-height: 1123px; /* Standard A4 height at 96 DPI */
+      width: 794px; /* A4 width at 96 DPI */
+      min-height: 1123px; /* A4 height at 96 DPI */
       background: #ffffff;
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
       border-radius: 2px;
     }
 
-    /* Visual Page Guides (Page Numbers & Author Footer Preview) */
+    /* Visual Page Guides (Page Numbers, Date & Author Footer Preview) */
     #page-guides {
       position: absolute;
       inset: 0;
@@ -163,9 +198,7 @@
       border-bottom: 2px dashed #cbd5e1;
     }
 
-    .page-guide-slot:last-child {
-      border-bottom: none;
-    }
+    .page-guide-slot:last-child { border-bottom: none; }
 
     .page-guide-footer {
       position: absolute;
@@ -174,13 +207,18 @@
       right: 56px;
       padding-top: 8px;
       border-top: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
       align-items: center;
+      gap: 8px;
       font-size: 12px;
       color: #6b7280;
-      font-family: Arial, sans-serif;
+      font-family: "Roboto", Arial, sans-serif;
     }
+
+    .footer-left { text-align: left; }
+    .footer-center { text-align: center; }
+    .footer-right { text-align: right; }
 
     /* Quill Editor Area overlaid on Paper */
     #editor-container {
@@ -189,14 +227,18 @@
       border: none !important;
       min-height: 1123px;
       background: transparent;
+      font-family: "Roboto", Arial, sans-serif;
     }
 
     #editor-container .ql-editor {
       min-height: 1123px;
       padding: 56px 56px 90px 56px;
+      font-family: "Roboto", Arial, sans-serif;
       font-size: 16px;
+      font-weight: 400;
       line-height: 1.6;
       overflow-y: visible;
+      -webkit-font-smoothing: antialiased;
     }
 
     #editor-container .ql-editor img {
@@ -206,10 +248,35 @@
       margin: 10px 0;
     }
 
+    /* Optical Fix: Keep large font sizes sleek instead of looking semi-bold */
+    .ql-editor span[style*="font-size: 22px"],
+    .ql-editor span[style*="font-size: 28px"],
+    .ql-editor span[style*="font-size: 36px"],
+    .pdf-export-wrapper span[style*="font-size: 22px"],
+    .pdf-export-wrapper span[style*="font-size: 28px"],
+    .pdf-export-wrapper span[style*="font-size: 36px"] {
+      font-weight: 300;
+    }
+
+    /* Preserve real Bold when user clicks the B button */
+    .ql-editor strong,
+    .ql-editor strong span,
+    .ql-editor b,
+    .ql-editor b span,
+    .pdf-export-wrapper strong,
+    .pdf-export-wrapper strong span,
+    .pdf-export-wrapper b,
+    .pdf-export-wrapper b span {
+      font-weight: 700 !important;
+    }
+
     /* Custom Font Family Labels in Quill Dropdown */
     .ql-snow .ql-picker.ql-font { width: 130px; }
     .ql-snow .ql-picker.ql-font .ql-picker-label::before,
-    .ql-snow .ql-picker.ql-font .ql-picker-item::before { content: 'Arial'; }
+    .ql-snow .ql-picker.ql-font .ql-picker-item::before { content: 'Roboto'; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="Roboto"]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="Roboto"]::before { content: 'Roboto'; font-family: "Roboto", sans-serif; }
 
     .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="Arial"]::before,
     .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="Arial"]::before { content: 'Arial'; font-family: Arial, sans-serif; }
@@ -253,14 +320,17 @@
       width: 180mm;
       background: #ffffff;
       color: #111827;
-      font-family: Arial, sans-serif;
+      font-family: "Roboto", Arial, sans-serif;
       font-size: 16px;
+      font-weight: 400;
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
     .pdf-export-wrapper .ql-editor {
       padding: 0;
       overflow: visible;
+      font-family: "Roboto", Arial, sans-serif;
     }
 
     .pdf-export-wrapper img,
@@ -299,7 +369,7 @@
     </div>
   </header>
 
-  <!-- Formatting Toolbar & Author Footer Input -->
+  <!-- Formatting Toolbar & Date / Author Controls -->
   <div class="controls-wrapper">
     <div id="toolbar-container">
       <span class="ql-formats">
@@ -310,7 +380,8 @@
           <option selected>Normal</option>
         </select>
         <select class="ql-font" title="Font Style">
-          <option value="Arial" selected></option>
+          <option value="Roboto" selected></option>
+          <option value="Arial"></option>
           <option value="Times New Roman"></option>
           <option value="Georgia"></option>
           <option value="Verdana"></option>
@@ -353,13 +424,25 @@
       </span>
     </div>
 
-    <div class="footer-bar">
-      <label for="author-footer"><strong>Page Bottom Text / Author Name:</strong></label>
-      <input
-        type="text"
-        id="author-footer"
-        placeholder="e.g., Written by Rahul Sharma"
-      />
+    <div class="meta-bar">
+      <div class="meta-field">
+        <label for="doc-date"><strong>Date:</strong></label>
+        <input
+          type="text"
+          id="doc-date"
+          placeholder="e.g., 22/11/2026"
+        />
+        <button type="button" id="today-btn" class="btn-today">Today</button>
+      </div>
+
+      <div class="meta-field">
+        <label for="author-footer"><strong>Bottom Text / Author:</strong></label>
+        <input
+          type="text"
+          id="author-footer"
+          placeholder="e.g., Written by Gourab Saha"
+        />
+      </div>
     </div>
   </div>
 
@@ -382,7 +465,7 @@
     Quill.register(SizeStyle, true);
 
     const FontStyle = Quill.import('attributors/style/font');
-    FontStyle.whitelist = ['Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New'];
+    FontStyle.whitelist = ['Roboto', 'Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New'];
     Quill.register(FontStyle, true);
 
     // 2. Initialize Rich Text Editor
@@ -394,18 +477,30 @@
       }
     });
 
-    // 3. Automatic Live Page Numbers & Author Footer Preview
+    // 3. Live Footer Preview (Page Number Left | Date Center | Author Right)
     const PAGE_HEIGHT = 1123; // A4 height at 96 DPI
     const pageGuides = document.getElementById('page-guides');
     const paperStage = document.getElementById('paper-stage');
     const pageCounter = document.getElementById('page-counter');
     const authorInput = document.getElementById('author-footer');
+    const dateInput = document.getElementById('doc-date');
+    const todayBtn = document.getElementById('today-btn');
     const editorEl = document.querySelector('#editor-container .ql-editor');
+
+    todayBtn.addEventListener('click', () => {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      dateInput.value = `${dd}/${mm}/${yyyy}`;
+      updatePageGuides();
+    });
 
     function updatePageGuides() {
       const contentHeight = editorEl.scrollHeight;
       const totalPages = Math.max(1, Math.ceil(contentHeight / PAGE_HEIGHT));
       const authorText = authorInput.value.trim();
+      const dateText = dateInput.value.trim();
 
       paperStage.style.minHeight = `${totalPages * PAGE_HEIGHT}px`;
       pageCounter.textContent = totalPages === 1 ? 'Page 1' : `${totalPages} Pages`;
@@ -415,8 +510,9 @@
         guidesHTML += `
           <div class="page-guide-slot">
             <div class="page-guide-footer">
-              <span>Page ${i}</span>
-              <span>${escapeHtml(authorText)}</span>
+              <span class="footer-left">Page ${i}</span>
+              <span class="footer-center">${dateText ? 'Date: ' + escapeHtml(dateText) : ''}</span>
+              <span class="footer-right">${escapeHtml(authorText)}</span>
             </div>
           </div>
         `;
@@ -432,25 +528,25 @@
         .replace(/"/g, '&quot;');
     }
 
-    // Update page numbers automatically as the user types, pastes, or edits footer
     const resizeObserver = new ResizeObserver(updatePageGuides);
     resizeObserver.observe(editorEl);
     quill.on('text-change', updatePageGuides);
     authorInput.addEventListener('input', updatePageGuides);
+    dateInput.addEventListener('input', updatePageGuides);
     updatePageGuides();
 
-    // 4. Generate & Download PDF with Bottom-Left Page Numbers + Author Footer
+    // 4. Generate & Download PDF with Page Number, Date, and Author on Every Page Footer
     const generateBtn = document.getElementById('generate-pdf-btn');
 
     generateBtn.addEventListener('click', async () => {
       const rawTitle = document.getElementById('doc-title').value.trim() || 'yourdoc-document';
       const safeFileName = rawTitle.replace(/[^a-zA-Z0-9-_ ]/g, '').trim() || 'yourdoc-document';
       const authorText = authorInput.value.trim();
+      const dateText = dateInput.value.trim();
 
       generateBtn.disabled = true;
       generateBtn.textContent = 'Generating PDF...';
 
-      // Build clean export container with Quill classes preserved
       const exportWrapper = document.createElement('div');
       exportWrapper.className = 'ql-snow pdf-export-wrapper';
 
@@ -492,10 +588,15 @@
               pdf.setFontSize(9.5);
               pdf.setTextColor(95, 95, 95);
 
-              // Automatic Page Number on Bottom-Left
+              // Bottom-Left: Automatic Page Number
               pdf.text(`Page ${i}`, 15, pageHeight - 9);
 
-              // Custom Author Name / Footer Text on Bottom-Right
+              // Bottom-Center: Custom Date on Every Page
+              if (dateText) {
+                pdf.text(`Date: ${dateText}`, pageWidth / 2, pageHeight - 9, { align: 'center' });
+              }
+
+              // Bottom-Right: Custom Author Name / Footer Text on Every Page
               if (authorText) {
                 pdf.text(authorText, pageWidth - 15, pageHeight - 9, { align: 'right' });
               }
