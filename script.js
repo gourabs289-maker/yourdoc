@@ -50,13 +50,12 @@ class ResizableImage extends BaseImage {
 }
 Quill.register(ResizableImage, true);
 
-// 3. Register Manual Page Break Blot
+// 3. Register Invisible Page Break Blot (no blue line or text badge)
 const BlockEmbed = Quill.import('blots/block/embed');
 class PageBreakBlot extends BlockEmbed {
   static create() {
     const node = super.create();
     node.setAttribute('contenteditable', 'false');
-    node.innerHTML = '<span class="ql-page-break-pill">Page Break <button type="button" class="ql-page-break-remove" title="Remove Page Break">&times;</button></span>';
     return node;
   }
 }
@@ -95,7 +94,34 @@ toolbarEl.addEventListener('mousedown', (e) => {
   e.preventDefault();
 });
 
-// 5. Undo, Redo & Manual Page Break Buttons
+// Helper: safely insert clean blank paragraphs after a block without copying headings/lists
+function insertCleanLinesAfter(endIdx, count) {
+  if (count <= 0) return endIdx;
+
+  const lineFmt = quill.getFormat(endIdx, 1);
+  const blockFormats = {};
+  ['header', 'list', 'blockquote', 'align'].forEach((key) => {
+    if (lineFmt[key]) blockFormats[key] = lineFmt[key];
+  });
+
+  isFormattingInternally = true;
+  quill.insertText(endIdx, '\n'.repeat(count), 'user');
+
+  if (Object.keys(blockFormats).length > 0) {
+    quill.formatLine(endIdx, 1, blockFormats, 'silent');
+    quill.formatLine(
+      endIdx + 1,
+      count,
+      { header: false, list: false, blockquote: false, align: false },
+      'silent'
+    );
+  }
+  isFormattingInternally = false;
+
+  return endIdx + count;
+}
+
+// 5. Undo, Redo & Silent Page Break Button (cursor stays in place)
 const undoBtn = document.getElementById('undo-btn');
 const redoBtn = document.getElementById('redo-btn');
 const pageBreakBtn = document.getElementById('page-break-btn');
@@ -104,14 +130,14 @@ undoBtn.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   deselectImage();
   quill.history.undo();
-  scheduleLayoutUpdate();
+  scheduleLayoutUpdate(true);
 });
 
 redoBtn.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   deselectImage();
   quill.history.redo();
-  scheduleLayoutUpdate();
+  scheduleLayoutUpdate(true);
 });
 
 pageBreakBtn.addEventListener('pointerdown', (e) => {
@@ -120,47 +146,45 @@ pageBreakBtn.addEventListener('pointerdown', (e) => {
 
   const current = quill.getSelection();
   const target = current ? current : savedRange;
-  let index = target ? target.index : Math.max(0, quill.getLength() - 1);
+  const origIndex = target ? target.index : Math.max(0, quill.getLength() - 1);
+  const origLength = target ? target.length : 0;
 
-  if (target && target.length > 0) {
-    quill.deleteText(index, target.length, 'user');
+  // Find the newline at the end of the current line so we don't split mid-word
+  const fullText = quill.getText();
+  let newlineIdx = fullText.indexOf('\n', origIndex);
+  if (newlineIdx === -1) {
+    newlineIdx = Math.max(0, quill.getLength() - 1);
   }
 
-  if (index > 0) {
-    const prevChar = quill.getText(index - 1, 1);
-    if (prevChar !== '\n') {
-      quill.insertText(index, '\n', 'user');
-      index += 1;
+  quill.history.cutoff();
+  isFormattingInternally = true;
+
+  if (newlineIdx >= quill.getLength() - 1) {
+    // End of document: add clean blank paragraph for the fresh page and place break before it
+    insertCleanLinesAfter(newlineIdx, 1);
+    isFormattingInternally = true;
+    quill.insertEmbed(newlineIdx + 1, 'pageBreak', true, 'user');
+  } else {
+    const insertPos = newlineIdx + 1;
+    const nextDelta = quill.getContents(insertPos, 1);
+    const nextIsBreak =
+      nextDelta.ops &&
+      nextDelta.ops[0] &&
+      nextDelta.ops[0].insert &&
+      Boolean(nextDelta.ops[0].insert.pageBreak);
+
+    quill.insertEmbed(insertPos, 'pageBreak', true, 'user');
+    if (nextIsBreak) {
+      quill.insertText(insertPos + 1, '\n', 'user');
     }
   }
 
-  quill.insertEmbed(index, 'pageBreak', true, 'user');
+  // Keep the cursor right where the user left it
+  quill.setSelection(origIndex, origLength, 'silent');
+  savedRange = { index: origIndex, length: origLength };
+  isFormattingInternally = false;
 
-  if (index + 1 >= quill.getLength() - 1) {
-    quill.insertText(index + 1, '\n', 'silent');
-  }
-
-  quill.setSelection(index + 1, 0, 'silent');
-  savedRange = { index: index + 1, length: 0 };
-  scheduleLayoutUpdate();
-});
-
-// Allow tapping the "×" button on any Page Break bar to delete it
-editorEl.addEventListener('click', (e) => {
-  const removeBtn = e.target.closest('.ql-page-break-remove');
-  if (removeBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const breakEl = removeBtn.closest('.ql-page-break');
-    if (breakEl) {
-      const blot = Quill.find(breakEl);
-      if (blot) {
-        const idx = quill.getIndex(blot);
-        quill.deleteText(idx, 1, 'user');
-        scheduleLayoutUpdate();
-      }
-    }
-  }
+  scheduleLayoutUpdate(true);
 });
 
 // 6. View Mode Dropdown (Mobile / Full Page / Desktop)
@@ -176,6 +200,7 @@ const VIEW_LABELS = {
 };
 
 let currentViewMode = window.innerWidth <= 768 ? 'mobile' : 'desktop';
+let currentFullPageScale = 1;
 
 function closeViewMenu() {
   viewPicker.classList.remove('open');
@@ -197,6 +222,7 @@ function applyViewMode(mode) {
 
 function updateFullPageScale() {
   if (currentViewMode !== 'fullpage') {
+    currentFullPageScale = 1;
     paperStage.style.transform = '';
     paperScaler.style.width = '';
     paperScaler.style.height = '';
@@ -207,6 +233,7 @@ function updateFullPageScale() {
   const scale = Math.min(1, availWidth / 794);
   const stageHeight = paperStage.offsetHeight || 1123;
 
+  currentFullPageScale = scale;
   paperStage.style.transform = `scale(${scale})`;
   paperScaler.style.width = `${Math.round(794 * scale)}px`;
   paperScaler.style.height = `${Math.ceil(stageHeight * scale)}px`;
@@ -422,7 +449,7 @@ quill.on('text-change', (delta, oldDelta, source) => {
   }
 });
 
-// 8. Tap-to-Resize Image Controls
+// 8. Tap-to-Resize Image Controls & Tap-Anywhere Cursor Placement on Any Page
 const imgResizeBar = document.getElementById('img-resize-bar');
 const imgDecBtn = document.getElementById('img-dec-btn');
 const imgIncBtn = document.getElementById('img-inc-btn');
@@ -500,12 +527,109 @@ function setSelectedImageAlign(align) {
   syncImageBarUI();
 }
 
+// Handle clicking images OR tapping empty areas on any page to place cursor right there
 editorEl.addEventListener('click', (e) => {
   if (e.target && e.target.tagName === 'IMG') {
     e.stopPropagation();
     selectImage(e.target);
-  } else if (!e.target.closest('.ql-page-break-remove')) {
-    deselectImage();
+    return;
+  }
+
+  deselectImage();
+
+  // If user tapped directly on existing text/paragraph or dragged a selection, keep native cursor placement
+  const domSel = window.getSelection();
+  if (domSel && !domSel.isCollapsed) return;
+  if (e.target !== editorEl) return;
+
+  const rect = editorEl.getBoundingClientRect();
+  const scale = currentViewMode === 'fullpage' ? currentFullPageScale : 1;
+  const tapX = (e.clientX - rect.left) / scale;
+  const tapY = (e.clientY - rect.top) / scale;
+
+  const totalPages = Math.max(1, currentTotalPages);
+  const rawPageIdx = Math.floor(tapY / SLOT_STRIDE);
+
+  // Ignore taps directly inside the gray divider gap between sheets
+  if (rawPageIdx >= 0 && rawPageIdx < totalPages) {
+    const offsetInSlot = tapY - rawPageIdx * SLOT_STRIDE;
+    if (offsetInSlot > PAGE_HEIGHT) return;
+  }
+
+  const pageIdx = Math.max(0, Math.min(totalPages - 1, rawPageIdx));
+  const topPad = getTopPad();
+  const lineHeight = 25.6; // 16px * 1.6 line-height
+  const pageStart = pageIdx * SLOT_STRIDE;
+  const minY = pageStart + topPad;
+  const maxY = pageStart + PAGE_HEIGHT - BOTTOM_PAD - lineHeight;
+  const targetY = Math.max(minY, Math.min(maxY, tapY));
+
+  const contentChildren = Array.from(editorEl.children).filter(
+    (el) => !el.classList.contains('ql-page-break')
+  );
+  const pageChildren = contentChildren.filter(
+    (el) => Math.floor(el.offsetTop / SLOT_STRIDE) === pageIdx
+  );
+
+  if (pageChildren.length === 0) {
+    // Fallback: place cursor at the nearest preceding block
+    const before = contentChildren.filter((el) => el.offsetTop <= targetY);
+    const fallbackEl = before.length ? before[before.length - 1] : contentChildren[0];
+    if (fallbackEl) {
+      const blot = Quill.find(fallbackEl);
+      if (blot) {
+        const idx = Math.min(quill.getIndex(blot) + blot.length() - 1, quill.getLength() - 1);
+        quill.setSelection(idx, 0, 'user');
+      }
+    }
+    return;
+  }
+
+  // 1. If tap landed in side padding next to an existing line on this page, place cursor on that line
+  for (const child of pageChildren) {
+    if (targetY >= child.offsetTop && targetY <= child.offsetTop + child.offsetHeight) {
+      const blot = Quill.find(child);
+      if (blot) {
+        const startIdx = quill.getIndex(blot);
+        const endIdx = Math.min(startIdx + blot.length() - 1, quill.getLength() - 1);
+        const placeAtStart = tapX < (currentViewMode === 'mobile' ? 20 : 56);
+        quill.setSelection(placeAtStart ? startIdx : endIdx, 0, 'user');
+      }
+      return;
+    }
+  }
+
+  // 2. If tap landed above the first line on this page, place cursor at the start of the first line
+  const firstChild = pageChildren[0];
+  if (targetY < firstChild.offsetTop) {
+    const blot = Quill.find(firstChild);
+    if (blot) {
+      quill.setSelection(quill.getIndex(blot), 0, 'user');
+    }
+    return;
+  }
+
+  // 3. Tap landed in empty space below the last line on this page: add lines so cursor stays where tapped
+  const lastChild = pageChildren[pageChildren.length - 1];
+  const lastBlot = Quill.find(lastChild);
+  if (!lastBlot) return;
+
+  const endIdx = Math.min(quill.getIndex(lastBlot) + lastBlot.length() - 1, quill.getLength() - 1);
+  const lastBottom = lastChild.offsetTop + lastChild.offsetHeight;
+  const pageContentBottom = pageStart + PAGE_HEIGHT - BOTTOM_PAD;
+
+  const linesNeeded = Math.max(0, Math.floor((targetY - lastBottom) / lineHeight));
+  const maxExtraLines = Math.max(0, Math.floor((pageContentBottom - lastBottom) / lineHeight));
+  const linesToAdd = Math.min(linesNeeded, maxExtraLines);
+
+  if (linesToAdd > 0) {
+    const newCursorIdx = insertCleanLinesAfter(endIdx, linesToAdd);
+    quill.setSelection(newCursorIdx, 0, 'user');
+    savedRange = { index: newCursorIdx, length: 0 };
+    scheduleLayoutUpdate();
+  } else {
+    quill.setSelection(endIdx, 0, 'user');
+    savedRange = { index: endIdx, length: 0 };
   }
 });
 
@@ -575,6 +699,7 @@ let layoutRafId = null;
 let isUpdatingLayout = false;
 let lastGuidesKey = '';
 let lastMeasuredHeight = 0;
+let currentTotalPages = 1;
 
 function getTopPad() {
   return currentViewMode === 'mobile' ? 40 : 56;
@@ -623,7 +748,7 @@ function applyPageFlow() {
       const height = child.offsetHeight;
       let pageIdx = Math.floor(top / SLOT_STRIDE);
 
-      // If previous element was a manual Page Break, start on forcedMinPage
+      // If previous element was a Page Break, start on forcedMinPage
       if (pageIdx < forcedMinPage) {
         const targetTop = forcedMinPage * SLOT_STRIDE + topPad;
         const push = Math.max(0, targetTop - top);
@@ -644,33 +769,9 @@ function applyPageFlow() {
       const hasImage = Boolean(child.querySelector('img'));
       const isHeading = /^H[1-6]$/.test(child.tagName);
 
-      // If block starts in footer/divider/top-margin zone, push to clean top of page
-      if (top > contentBottomLimit) {
-        const targetTop = (pageIdx + 1) * SLOT_STRIDE + topPad;
-        const push = targetTop - top;
-        if (push > 0) {
-          child.style.marginTop = `${push}px`;
-          child.dataset.pagePush = '1';
-          top = child.offsetTop;
-          pageIdx = Math.floor(top / SLOT_STRIDE);
-        }
-      } else if (pageIdx > 0 && top < contentTopLimit) {
-        const push = contentTopLimit - top;
-        if (push > 0) {
-          child.style.marginTop = `${push}px`;
-          child.dataset.pagePush = '1';
-          top = child.offsetTop;
-          pageIdx = Math.floor(top / SLOT_STRIDE);
-        }
-      } else if (bottom > contentBottomLimit) {
-        // Block crosses into footer/divider:
-        // Always push image blocks, headings, or normal short blocks whole to next page
-        const shouldKeepTogether =
-          (hasImage && height <= printableHeight + 12) ||
-          (isHeading && height <= printableHeight) ||
-          (!hasImage && height <= 220);
-
-        if (shouldKeepTogether) {
+      if (!isPageBreak) {
+        // If block starts in footer/divider/top-margin zone, push to clean top of page
+        if (top > contentBottomLimit) {
           const targetTop = (pageIdx + 1) * SLOT_STRIDE + topPad;
           const push = targetTop - top;
           if (push > 0) {
@@ -678,6 +779,31 @@ function applyPageFlow() {
             child.dataset.pagePush = '1';
             top = child.offsetTop;
             pageIdx = Math.floor(top / SLOT_STRIDE);
+          }
+        } else if (pageIdx > 0 && top < contentTopLimit) {
+          const push = contentTopLimit - top;
+          if (push > 0) {
+            child.style.marginTop = `${push}px`;
+            child.dataset.pagePush = '1';
+            top = child.offsetTop;
+            pageIdx = Math.floor(top / SLOT_STRIDE);
+          }
+        } else if (bottom > contentBottomLimit) {
+          // Block crosses into footer/divider: keep images, headings, and normal blocks whole
+          const shouldKeepTogether =
+            (hasImage && height <= printableHeight + 12) ||
+            (isHeading && height <= printableHeight) ||
+            (!hasImage && height <= 220);
+
+          if (shouldKeepTogether) {
+            const targetTop = (pageIdx + 1) * SLOT_STRIDE + topPad;
+            const push = targetTop - top;
+            if (push > 0) {
+              child.style.marginTop = `${push}px`;
+              child.dataset.pagePush = '1';
+              top = child.offsetTop;
+              pageIdx = Math.floor(top / SLOT_STRIDE);
+            }
           }
         }
       }
@@ -694,6 +820,8 @@ function applyPageFlow() {
 
     // 3. Render visible white page cards + gray page dividers + footers
     const totalPages = Math.max(1, maxPageIndex + 1);
+    currentTotalPages = totalPages;
+
     const totalStageHeight = totalPages * PAGE_HEIGHT + (totalPages - 1) * GAP_HEIGHT;
     const authorText = authorInput.value.trim();
     const dateText = dateInput.value.trim();
