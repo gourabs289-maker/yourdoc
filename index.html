@@ -28,7 +28,7 @@
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 120;
       background: #ffffff;
       border-bottom: 1px solid #d1d5db;
       padding: 10px 16px;
@@ -100,22 +100,106 @@
     .controls-wrapper {
       position: sticky;
       top: 57px;
-      z-index: 90;
+      z-index: 110;
       background: #f8fafc;
       border-bottom: 1px solid #d1d5db;
     }
 
     #toolbar-container {
+      position: relative;
+      z-index: 115;
       border: none !important;
       border-bottom: 1px solid #e5e7eb !important;
       background: #ffffff;
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       justify-content: center;
       padding: 8px 10px !important;
     }
 
+    /* Mobile-safe Custom Font Size Dropdown (never steals focus or hides behind page) */
+    .custom-size-picker {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+
+    .size-picker-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      height: 24px;
+      min-width: 72px;
+      padding: 0 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #444444;
+      background: #ffffff;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .size-picker-trigger:hover,
+    .custom-size-picker.open .size-picker-trigger {
+      color: #06c;
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .size-picker-arrow {
+      font-size: 10px;
+      opacity: 0.75;
+    }
+
+    .size-picker-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 96px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+      padding: 4px 0;
+      z-index: 500;
+    }
+
+    .custom-size-picker.open .size-picker-menu {
+      display: block;
+    }
+
+    .size-option {
+      padding: 8px 14px;
+      font-size: 14px;
+      color: #1f2937;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .size-option:hover {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    .size-option.active {
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
     .meta-bar {
+      position: relative;
+      z-index: 100;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -159,18 +243,29 @@
 
     .btn-today:hover { background: #dbeafe; }
 
-    /* Give mobile users more typing space when keyboard is open */
+    /* Mobile: release sticky scroll for keyboard room while KEEPING high z-index */
     @media (max-width: 640px) {
-      .topbar, .controls-wrapper {
-        position: static;
+      .topbar {
+        position: relative;
+        z-index: 120;
       }
+      .controls-wrapper {
+        position: relative;
+        top: 0;
+        z-index: 110;
+      }
+    }
+
+    /* Ensure all Quill dropdown popups stay above everything */
+    .ql-snow .ql-picker-options {
+      z-index: 500 !important;
     }
 
     /* Workspace & A4 Page Simulation */
     .workspace {
+      position: relative;
+      z-index: 1;
       padding: 24px 12px 60px;
-      display: flex;
-      justify-content: center;
       overflow-x: auto;
     }
 
@@ -178,6 +273,7 @@
       position: relative;
       width: 794px; /* A4 width at 96 DPI */
       min-height: 1123px; /* A4 height at 96 DPI */
+      margin: 0 auto;
       background: #ffffff;
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
       border-radius: 2px;
@@ -250,11 +346,17 @@
 
     /* Optical Fix: Keep large font sizes sleek instead of looking semi-bold */
     .ql-editor span[style*="font-size: 22px"],
+    .ql-editor span[style*="font-size:22px"],
     .ql-editor span[style*="font-size: 28px"],
+    .ql-editor span[style*="font-size:28px"],
     .ql-editor span[style*="font-size: 36px"],
+    .ql-editor span[style*="font-size:36px"],
     .pdf-export-wrapper span[style*="font-size: 22px"],
+    .pdf-export-wrapper span[style*="font-size:22px"],
     .pdf-export-wrapper span[style*="font-size: 28px"],
-    .pdf-export-wrapper span[style*="font-size: 36px"] {
+    .pdf-export-wrapper span[style*="font-size:28px"],
+    .pdf-export-wrapper span[style*="font-size: 36px"],
+    .pdf-export-wrapper span[style*="font-size:36px"] {
       font-weight: 300;
     }
 
@@ -271,7 +373,7 @@
     }
 
     /* Custom Font Family Labels in Quill Dropdown */
-    .ql-snow .ql-picker.ql-font { width: 130px; }
+    .ql-snow .ql-picker.ql-font { width: 126px; }
     .ql-snow .ql-picker.ql-font .ql-picker-label::before,
     .ql-snow .ql-picker.ql-font .ql-picker-item::before { content: 'Roboto'; }
 
@@ -292,28 +394,6 @@
 
     .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="Courier New"]::before,
     .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="Courier New"]::before { content: 'Courier New'; font-family: "Courier New", monospace; }
-
-    /* Custom Font Size Labels in Quill Dropdown */
-    .ql-snow .ql-picker.ql-size { width: 78px; }
-    .ql-snow .ql-picker.ql-size .ql-picker-label::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item::before { content: '16px'; }
-
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="10px"]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="10px"]::before { content: '10px'; }
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before { content: '12px'; }
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before { content: '14px'; }
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before { content: '16px'; }
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before { content: '18px'; }
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="22px"]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="22px"]::before { content: '22px'; }
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="28px"]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="28px"]::before { content: '28px'; }
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="36px"]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="36px"]::before { content: '36px'; }
 
     /* Clean PDF Export Rules */
     .pdf-export-wrapper {
@@ -379,6 +459,7 @@
           <option value="3">Heading 3</option>
           <option selected>Normal</option>
         </select>
+
         <select class="ql-font" title="Font Style">
           <option value="Roboto" selected></option>
           <option value="Arial"></option>
@@ -387,16 +468,24 @@
           <option value="Verdana"></option>
           <option value="Courier New"></option>
         </select>
-        <select class="ql-size" title="Font Size">
-          <option value="10px"></option>
-          <option value="12px"></option>
-          <option value="14px"></option>
-          <option value="16px" selected></option>
-          <option value="18px"></option>
-          <option value="22px"></option>
-          <option value="28px"></option>
-          <option value="36px"></option>
-        </select>
+
+        <!-- Custom Mobile-Safe Font Size Dropdown -->
+        <div class="custom-size-picker" id="custom-size-picker" title="Font Size">
+          <div class="size-picker-trigger" id="size-picker-trigger" role="button" aria-haspopup="listbox" aria-expanded="false">
+            <span id="size-picker-label">16px</span>
+            <span class="size-picker-arrow">&#9662;</span>
+          </div>
+          <div class="size-picker-menu" id="size-picker-menu" role="listbox">
+            <div class="size-option" data-size="10px">10px</div>
+            <div class="size-option" data-size="12px">12px</div>
+            <div class="size-option" data-size="14px">14px</div>
+            <div class="size-option active" data-size="16px">16px</div>
+            <div class="size-option" data-size="18px">18px</div>
+            <div class="size-option" data-size="22px">22px</div>
+            <div class="size-option" data-size="28px">28px</div>
+            <div class="size-option" data-size="36px">36px</div>
+          </div>
+        </div>
       </span>
 
       <span class="ql-formats">
@@ -477,7 +566,207 @@
       }
     });
 
-    // 3. Live Footer Preview (Page Number Left | Date Center | Author Right)
+    const toolbarEl = document.getElementById('toolbar-container');
+    const editorEl = document.querySelector('#editor-container .ql-editor');
+
+    // Prevent toolbar taps from stealing focus and clearing blue text highlights
+    toolbarEl.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+    });
+
+    // 3. Mobile-Safe Selection Memory + Font Size Dropdown + Gboard Typing Lock
+    const sizePicker = document.getElementById('custom-size-picker');
+    const sizeTrigger = document.getElementById('size-picker-trigger');
+    const sizeLabel = document.getElementById('size-picker-label');
+    const sizeOptions = document.querySelectorAll('.size-option');
+
+    let savedRange = { index: 0, length: 0 };
+    let activeSize = '16px';
+    let sizeLocked = false;
+    let lockedCursorIndex = null;
+    let isComposing = false;
+    let compStartIndex = null;
+    let isFormattingInternally = false;
+
+    function updateSizeDropdownUI(size) {
+      const displaySize = size || '16px';
+      sizeLabel.textContent = displaySize;
+      sizeOptions.forEach((opt) => {
+        opt.classList.toggle('active', opt.dataset.size === displaySize);
+      });
+    }
+
+    function closeSizeMenu() {
+      sizePicker.classList.remove('open');
+      sizeTrigger.setAttribute('aria-expanded', 'false');
+    }
+
+    // Track the latest non-null selection inside the editor
+    quill.on('selection-change', (range, oldRange, source) => {
+      if (!range) return;
+
+      savedRange = { index: range.index, length: range.length };
+
+      if (source === 'user') {
+        // Keep locked size if user taps back on the exact same cursor spot
+        if (sizeLocked && range.length === 0 && range.index === lockedCursorIndex) {
+          quill.format('size', activeSize, 'silent');
+          updateSizeDropdownUI(activeSize);
+          return;
+        }
+
+        // Otherwise sync dropdown to the text at the new cursor/selection
+        sizeLocked = false;
+        lockedCursorIndex = null;
+        const currentFormat = quill.getFormat(range);
+        activeSize = currentFormat.size || '16px';
+        updateSizeDropdownUI(activeSize);
+      }
+    });
+
+    // Toggle Font Size dropdown without dropping highlight
+    sizeTrigger.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const current = quill.getSelection();
+      if (current) {
+        savedRange = { index: current.index, length: current.length };
+      }
+      const isOpen = sizePicker.classList.toggle('open');
+      sizeTrigger.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    // Apply chosen Font Size cleanly to selected text OR lock for new typing
+    sizeOptions.forEach((opt) => {
+      opt.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const newSize = opt.dataset.size;
+        closeSizeMenu();
+
+        const current = quill.getSelection();
+        const target = current ? current : savedRange;
+
+        activeSize = newSize;
+        updateSizeDropdownUI(newSize);
+
+        if (target && target.length > 0) {
+          // Resize highlighted word(s) and keep them selected
+          sizeLocked = false;
+          lockedCursorIndex = null;
+          isFormattingInternally = true;
+          quill.formatText(target.index, target.length, 'size', newSize, 'user');
+          quill.setSelection(target.index, target.length, 'silent');
+          isFormattingInternally = false;
+          savedRange = { index: target.index, length: target.length };
+        } else {
+          // Lock chosen size at blinking cursor so mobile keyboard won't reset to 16px
+          const cursorIdx = target ? target.index : Math.max(0, quill.getLength() - 1);
+          sizeLocked = true;
+          lockedCursorIndex = cursorIdx;
+          isFormattingInternally = true;
+          quill.setSelection(cursorIdx, 0, 'silent');
+          quill.format('size', newSize, 'silent');
+          isFormattingInternally = false;
+          savedRange = { index: cursorIdx, length: 0 };
+        }
+      });
+    });
+
+    // Close dropdown when tapping anywhere outside it
+    document.addEventListener('pointerdown', (e) => {
+      if (!sizePicker.contains(e.target)) {
+        closeSizeMenu();
+      }
+    });
+
+    // Reset size lock if user clicks Clear Formatting button
+    const cleanBtn = document.querySelector('.ql-clean');
+    if (cleanBtn) {
+      cleanBtn.addEventListener('click', () => {
+        sizeLocked = false;
+        lockedCursorIndex = null;
+        activeSize = '16px';
+        updateSizeDropdownUI('16px');
+      });
+    }
+
+    // Handle Android predictive keyboard (IME composition) without breaking words
+    editorEl.addEventListener('compositionstart', () => {
+      isComposing = true;
+      const cur = quill.getSelection();
+      compStartIndex = cur ? cur.index : savedRange.index;
+    });
+
+    editorEl.addEventListener('compositionend', () => {
+      isComposing = false;
+      if (!sizeLocked || compStartIndex === null) {
+        compStartIndex = null;
+        return;
+      }
+
+      const startIdx = compStartIndex;
+      compStartIndex = null;
+
+      setTimeout(() => {
+        const cur = quill.getSelection();
+        const endIdx = cur ? cur.index : startIdx;
+        if (endIdx > startIdx) {
+          isFormattingInternally = true;
+          quill.formatText(startIdx, endIdx - startIdx, 'size', activeSize, 'silent');
+          quill.format('size', activeSize, 'silent');
+          isFormattingInternally = false;
+          lockedCursorIndex = endIdx;
+          savedRange = { index: endIdx, length: 0 };
+        }
+      }, 0);
+    });
+
+    // Enforce locked font size on direct character typing (numbers, spaces, desktop typing)
+    quill.on('text-change', (delta, oldDelta, source) => {
+      updatePageGuides();
+
+      if (source !== 'user' || isFormattingInternally || isComposing || !sizeLocked) {
+        return;
+      }
+
+      let index = 0;
+      const rangesToFormat = [];
+
+      for (const op of delta.ops) {
+        if (typeof op.retain === 'number') {
+          index += op.retain;
+        } else if (typeof op.insert === 'string') {
+          const len = op.insert.length;
+          if (op.insert !== '\n' && (!op.attributes || op.attributes.size !== activeSize)) {
+            rangesToFormat.push({ index, length: len });
+          }
+          index += len;
+        } else if (op.insert) {
+          index += 1;
+        }
+      }
+
+      if (rangesToFormat.length > 0) {
+        isFormattingInternally = true;
+        rangesToFormat.forEach((r) => {
+          quill.formatText(r.index, r.length, 'size', activeSize, 'silent');
+        });
+        quill.format('size', activeSize, 'silent');
+        isFormattingInternally = false;
+      } else {
+        quill.format('size', activeSize, 'silent');
+      }
+
+      const cur = quill.getSelection();
+      if (cur) {
+        lockedCursorIndex = cur.index;
+        savedRange = { index: cur.index, length: cur.length };
+      }
+    });
+
+    // 4. Live Footer Preview (Page Number Left | Date Center | Author Right)
     const PAGE_HEIGHT = 1123; // A4 height at 96 DPI
     const pageGuides = document.getElementById('page-guides');
     const paperStage = document.getElementById('paper-stage');
@@ -485,7 +774,6 @@
     const authorInput = document.getElementById('author-footer');
     const dateInput = document.getElementById('doc-date');
     const todayBtn = document.getElementById('today-btn');
-    const editorEl = document.querySelector('#editor-container .ql-editor');
 
     todayBtn.addEventListener('click', () => {
       const now = new Date();
@@ -530,12 +818,11 @@
 
     const resizeObserver = new ResizeObserver(updatePageGuides);
     resizeObserver.observe(editorEl);
-    quill.on('text-change', updatePageGuides);
     authorInput.addEventListener('input', updatePageGuides);
     dateInput.addEventListener('input', updatePageGuides);
     updatePageGuides();
 
-    // 4. Generate & Download PDF with Page Number, Date, and Author on Every Page Footer
+    // 5. Generate & Download PDF with Page Number, Date, and Author on Every Page Footer
     const generateBtn = document.getElementById('generate-pdf-btn');
 
     generateBtn.addEventListener('click', async () => {
