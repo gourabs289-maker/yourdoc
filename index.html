@@ -19,7 +19,7 @@
     body {
       margin: 0;
       font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      background: #eef1f5;
+      background: #dce3ec;
       color: #1f2937;
       -webkit-font-smoothing: antialiased;
     }
@@ -60,7 +60,7 @@
       border-radius: 6px;
       font-size: 14px;
       outline: none;
-      width: 175px;
+      width: 170px;
     }
 
     .doc-input:focus { border-color: #2563eb; }
@@ -68,7 +68,7 @@
     .actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -77,15 +77,100 @@
       font-weight: 600;
       color: #4b5563;
       background: #f3f4f6;
-      padding: 6px 12px;
+      padding: 6px 11px;
       border-radius: 20px;
+    }
+
+    /* View Mode Dropdown with clear downward caret */
+    .view-picker {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .view-picker-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 7px 11px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2937;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .view-picker-trigger:hover,
+    .view-picker.open .view-picker-trigger {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .dropdown-caret {
+      font-size: 11px;
+      line-height: 1;
+      opacity: 0.85;
+    }
+
+    .view-picker-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 5px);
+      right: 0;
+      min-width: 155px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+      padding: 4px 0;
+      z-index: 600;
+    }
+
+    .view-picker.open .view-picker-menu {
+      display: block;
+    }
+
+    .view-option {
+      padding: 9px 14px;
+      font-size: 13px;
+      color: #1f2937;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .view-option:hover {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    .view-option.active {
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .view-option.active::after {
+      content: "✓";
+      font-size: 12px;
+      font-weight: 700;
     }
 
     .btn-pdf {
       background: #2563eb;
       color: #ffffff;
       border: none;
-      padding: 9px 16px;
+      padding: 8px 15px;
       border-radius: 6px;
       font-size: 14px;
       font-weight: 600;
@@ -116,6 +201,35 @@
       align-items: center;
       justify-content: center;
       padding: 8px 10px !important;
+      row-gap: 4px;
+    }
+
+    /* Custom Toolbar Icon Buttons (Undo, Redo, Page Break) */
+    .custom-toolbar-btn {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 28px !important;
+      height: 24px !important;
+      padding: 3px 5px !important;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #444444;
+    }
+
+    .custom-toolbar-btn:hover {
+      color: #06c;
+    }
+
+    .custom-toolbar-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     /* Mobile-safe Custom Font Size Dropdown (never steals focus or hides behind page) */
@@ -261,40 +375,112 @@
       z-index: 500 !important;
     }
 
-    /* Workspace & A4 Page Simulation */
+    /* Workspace & View Modes */
     .workspace {
       position: relative;
       z-index: 1;
-      padding: 24px 12px 60px;
+      padding: 24px 12px 90px;
       overflow-x: auto;
+    }
+
+    .paper-scaler {
+      margin: 0 auto;
+      position: relative;
     }
 
     .paper-stage {
       position: relative;
-      width: 794px; /* A4 width at 96 DPI */
-      min-height: 1123px; /* A4 height at 96 DPI */
-      margin: 0 auto;
-      background: #ffffff;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-      border-radius: 2px;
+      width: 794px; /* True A4 width at 96 DPI */
+      min-height: 1123px; /* True A4 height at 96 DPI */
+      background: transparent;
+      transform-origin: top left;
     }
 
-    /* Visual Page Guides (Page Numbers, Date & Author Footer Preview) */
+    /* Desktop View */
+    body.view-desktop .workspace {
+      overflow-x: auto;
+    }
+    body.view-desktop .paper-scaler {
+      width: 794px;
+    }
+    body.view-desktop .paper-stage {
+      width: 794px;
+      transform: none !important;
+    }
+
+    /* Full Page View (scales full A4 sheet smoothly to fit screen) */
+    body.view-fullpage .workspace {
+      overflow-x: hidden;
+      padding: 18px 12px 90px;
+    }
+    body.view-fullpage .paper-stage {
+      width: 794px;
+    }
+
+    /* Mobile View (fits phone screen width with zero horizontal scroll) */
+    body.view-mobile .workspace {
+      overflow-x: hidden;
+      padding: 16px 10px 90px;
+    }
+    body.view-mobile .paper-scaler {
+      width: 100%;
+      max-width: 794px;
+    }
+    body.view-mobile .paper-stage {
+      width: 100%;
+      max-width: 794px;
+      transform: none !important;
+    }
+    body.view-mobile #editor-container .ql-editor {
+      padding: 40px 20px 88px 20px;
+    }
+    body.view-mobile .page-guide-footer {
+      left: 20px;
+      right: 20px;
+      font-size: 11px;
+    }
+
+    /* Distinct Page Sheets & Visible Page Dividers */
     #page-guides {
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       pointer-events: none;
       z-index: 1;
     }
 
-    .page-guide-slot {
+    .page-sheet-card {
       position: relative;
       width: 100%;
       height: 1123px;
-      border-bottom: 2px dashed #cbd5e1;
+      background: #ffffff;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.13);
+      border-radius: 2px;
     }
 
-    .page-guide-slot:last-child { border-bottom: none; }
+    .page-divider-gap {
+      height: 28px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .page-divider-gap::before,
+    .page-divider-gap::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #b8c4d4;
+      margin: 0 12px;
+    }
 
     .page-guide-footer {
       position: absolute;
@@ -316,7 +502,7 @@
     .footer-center { text-align: center; }
     .footer-right { text-align: right; }
 
-    /* Quill Editor Area overlaid on Paper */
+    /* Quill Editor Area overlaid on Paper Sheets */
     #editor-container {
       position: relative;
       z-index: 2;
@@ -328,7 +514,7 @@
 
     #editor-container .ql-editor {
       min-height: 1123px;
-      padding: 56px 56px 90px 56px;
+      padding: 56px 56px 88px 56px;
       font-family: "Roboto", Arial, sans-serif;
       font-size: 16px;
       font-weight: 400;
@@ -339,9 +525,174 @@
 
     #editor-container .ql-editor img {
       max-width: 100%;
+      max-height: 920px;
       height: auto;
       display: block;
       margin: 10px 0;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: outline-color 0.12s ease;
+    }
+
+    #editor-container .ql-editor img.selected-img {
+      outline: 3px solid #2563eb;
+      outline-offset: 2px;
+    }
+
+    /* Crisp Subscript & Superscript Rendering */
+    .ql-editor sub,
+    .ql-editor sup,
+    .pdf-export-wrapper sub,
+    .pdf-export-wrapper sup {
+      font-size: 0.75em;
+      line-height: 0;
+      position: relative;
+      vertical-align: baseline;
+    }
+
+    .ql-editor sup,
+    .pdf-export-wrapper sup {
+      top: -0.45em;
+    }
+
+    .ql-editor sub,
+    .pdf-export-wrapper sub {
+      bottom: -0.25em;
+    }
+
+    /* Manual Page Break Marker in Editor */
+    .ql-editor .ql-page-break {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 14px 0;
+      padding: 4px 0;
+      color: #2563eb;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .ql-editor .ql-page-break::before,
+    .ql-editor .ql-page-break::after {
+      content: "";
+      flex: 1;
+      border-top: 1.5px dashed #93c5fd;
+    }
+
+    .ql-page-break-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 2px 10px;
+    }
+
+    .ql-page-break-remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: none;
+      border-radius: 50%;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .ql-page-break-remove:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    /* Floating Touch-Friendly Image Resize Bar */
+    .img-resize-bar {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 650;
+      background: #111827;
+      color: #f9fafb;
+      padding: 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-width: calc(100vw - 20px);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .img-resize-bar.visible {
+      display: flex;
+    }
+
+    .img-bar-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .img-bar-sep {
+      width: 1px;
+      height: 20px;
+      background: #374151;
+      margin: 0 2px;
+    }
+
+    .img-bar-btn {
+      background: #1f2937;
+      color: #f9fafb;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .img-bar-btn:hover {
+      background: #374151;
+    }
+
+    .img-bar-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    .img-bar-btn.danger {
+      background: #991b1b;
+      border-color: #b91c1c;
+      color: #ffffff;
+    }
+
+    .img-bar-btn.danger:hover {
+      background: #dc2626;
+    }
+
+    .img-size-readout {
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 38px;
+      text-align: center;
+      color: #93c5fd;
     }
 
     /* Optical Fix: Keep large font sizes sleek instead of looking semi-bold */
@@ -414,6 +765,7 @@
     }
 
     .pdf-export-wrapper img,
+    .pdf-export-wrapper .pdf-img-block,
     .pdf-export-wrapper h1,
     .pdf-export-wrapper h2,
     .pdf-export-wrapper h3,
@@ -424,7 +776,24 @@
 
     .pdf-export-wrapper img {
       max-width: 100%;
+      max-height: 242mm;
       height: auto;
+      display: block;
+    }
+
+    .pdf-export-wrapper .ql-page-break {
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+      page-break-after: always !important;
+      break-after: page !important;
+    }
+
+    .pdf-export-wrapper .ql-page-break * {
+      display: none !important;
     }
   </style>
 </head>
@@ -444,6 +813,19 @@
       />
     </div>
     <div class="actions">
+      <!-- View Mode Dropdown -->
+      <div class="view-picker" id="view-picker" title="Switch Page View">
+        <button type="button" class="view-picker-trigger" id="view-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span id="view-picker-label">Desktop</span>
+          <span class="dropdown-caret">&#9662;</span>
+        </button>
+        <div class="view-picker-menu" id="view-picker-menu" role="listbox">
+          <div class="view-option" data-view="mobile">Mobile View</div>
+          <div class="view-option" data-view="fullpage">Full Page View</div>
+          <div class="view-option" data-view="desktop">Desktop View</div>
+        </div>
+      </div>
+
       <span id="page-counter" class="page-badge">Page 1</span>
       <button id="generate-pdf-btn" class="btn-pdf">Generate PDF</button>
     </div>
@@ -452,6 +834,16 @@
   <!-- Formatting Toolbar & Date / Author Controls -->
   <div class="controls-wrapper">
     <div id="toolbar-container">
+      <!-- Undo & Redo -->
+      <span class="ql-formats">
+        <button type="button" id="undo-btn" class="custom-toolbar-btn" title="Undo" aria-label="Undo">
+          <svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+        </button>
+        <button type="button" id="redo-btn" class="custom-toolbar-btn" title="Redo" aria-label="Redo">
+          <svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+        </button>
+      </span>
+
       <span class="ql-formats">
         <select class="ql-header" title="Paragraph Style">
           <option value="1">Heading 1</option>
@@ -495,6 +887,12 @@
         <button class="ql-strike" title="Strikethrough"></button>
       </span>
 
+      <!-- Subscript & Superscript -->
+      <span class="ql-formats">
+        <button class="ql-script" value="sub" title="Subscript (e.g. O₂)"></button>
+        <button class="ql-script" value="super" title="Superscript (e.g. x²)"></button>
+      </span>
+
       <span class="ql-formats">
         <select class="ql-color" title="Text Color"></select>
         <select class="ql-background" title="Highlight Color"></select>
@@ -509,6 +907,15 @@
       <span class="ql-formats">
         <button class="ql-blockquote" title="Quote"></button>
         <button class="ql-image" title="Insert Image"></button>
+        <button type="button" id="page-break-btn" class="custom-toolbar-btn" title="Insert Page Break" aria-label="Insert Page Break">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 4h14v5H5z"/>
+            <path d="M5 15h14v5H5z"/>
+            <line x1="3" y1="12" x2="7" y2="12"/>
+            <line x1="10" y1="12" x2="14" y2="12"/>
+            <line x1="17" y1="12" x2="21" y2="12"/>
+          </svg>
+        </button>
         <button class="ql-clean" title="Clear Formatting"></button>
       </span>
     </div>
@@ -536,12 +943,41 @@
   </div>
 
   <!-- Document Workspace -->
-  <main class="workspace">
-    <div class="paper-stage" id="paper-stage">
-      <div id="page-guides"></div>
-      <div id="editor-container"></div>
+  <main class="workspace" id="workspace">
+    <div class="paper-scaler" id="paper-scaler">
+      <div class="paper-stage" id="paper-stage">
+        <div id="page-guides"></div>
+        <div id="editor-container"></div>
+      </div>
     </div>
   </main>
+
+  <!-- Floating Image Resize Bar (appears when user taps an image) -->
+  <div class="img-resize-bar" id="img-resize-bar" role="toolbar" aria-label="Image controls">
+    <div class="img-bar-group">
+      <button type="button" class="img-bar-btn" id="img-dec-btn" title="Decrease Image Size">−</button>
+      <span class="img-size-readout" id="img-size-readout">100%</span>
+      <button type="button" class="img-bar-btn" id="img-inc-btn" title="Increase Image Size">+</button>
+    </div>
+    <div class="img-bar-sep"></div>
+    <div class="img-bar-group">
+      <button type="button" class="img-bar-btn img-preset-btn" data-pct="25">25%</button>
+      <button type="button" class="img-bar-btn img-preset-btn" data-pct="50">50%</button>
+      <button type="button" class="img-bar-btn img-preset-btn" data-pct="75">75%</button>
+      <button type="button" class="img-bar-btn img-preset-btn" data-pct="100">100%</button>
+    </div>
+    <div class="img-bar-sep"></div>
+    <div class="img-bar-group">
+      <button type="button" class="img-bar-btn img-align-btn" data-align="left" title="Align Left">Left</button>
+      <button type="button" class="img-bar-btn img-align-btn" data-align="center" title="Align Center">Center</button>
+      <button type="button" class="img-bar-btn img-align-btn" data-align="right" title="Align Right">Right</button>
+    </div>
+    <div class="img-bar-sep"></div>
+    <div class="img-bar-group">
+      <button type="button" class="img-bar-btn danger" id="img-delete-btn" title="Remove Image">Delete</button>
+      <button type="button" class="img-bar-btn" id="img-done-btn" title="Close Controls">Done</button>
+    </div>
+  </div>
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
@@ -557,24 +993,227 @@
     FontStyle.whitelist = ['Roboto', 'Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New'];
     Quill.register(FontStyle, true);
 
-    // 2. Initialize Rich Text Editor
+    // 2. Register Custom Resizable Image Blot (preserves width & alignment across Undo/Redo & PDF)
+    const BaseImage = Quill.import('formats/image');
+    class ResizableImage extends BaseImage {
+      static formats(domNode) {
+        const formats = {};
+        if (domNode.style.width) formats.width = domNode.style.width;
+        if (domNode.dataset.align) formats.align = domNode.dataset.align;
+        return formats;
+      }
+
+      format(name, value) {
+        if (name === 'width') {
+          if (value) {
+            this.domNode.style.width = value;
+            this.domNode.style.height = 'auto';
+          } else {
+            this.domNode.style.width = '';
+          }
+        } else if (name === 'align') {
+          if (value) {
+            this.domNode.dataset.align = value;
+            if (value === 'center') {
+              this.domNode.style.marginLeft = 'auto';
+              this.domNode.style.marginRight = 'auto';
+            } else if (value === 'right') {
+              this.domNode.style.marginLeft = 'auto';
+              this.domNode.style.marginRight = '0';
+            } else {
+              this.domNode.style.marginLeft = '0';
+              this.domNode.style.marginRight = 'auto';
+            }
+          } else {
+            delete this.domNode.dataset.align;
+            this.domNode.style.marginLeft = '';
+            this.domNode.style.marginRight = '';
+          }
+        } else {
+          super.format(name, value);
+        }
+      }
+    }
+    Quill.register(ResizableImage, true);
+
+    // 3. Register Manual Page Break Blot
+    const BlockEmbed = Quill.import('blots/block/embed');
+    class PageBreakBlot extends BlockEmbed {
+      static create() {
+        const node = super.create();
+        node.setAttribute('contenteditable', 'false');
+        node.innerHTML = '<span class="ql-page-break-pill">Page Break <button type="button" class="ql-page-break-remove" title="Remove Page Break">&times;</button></span>';
+        return node;
+      }
+    }
+    PageBreakBlot.blotName = 'pageBreak';
+    PageBreakBlot.tagName = 'div';
+    PageBreakBlot.className = 'ql-page-break';
+    Quill.register(PageBreakBlot);
+
+    // 4. Initialize Rich Text Editor
     const quill = new Quill('#editor-container', {
       theme: 'snow',
       placeholder: 'Start typing or paste your text, numbers, and images here...',
       modules: {
-        toolbar: '#toolbar-container'
+        toolbar: '#toolbar-container',
+        history: {
+          delay: 600,
+          maxStack: 100,
+          userOnly: true
+        }
       }
     });
 
     const toolbarEl = document.getElementById('toolbar-container');
     const editorEl = document.querySelector('#editor-container .ql-editor');
+    const workspaceEl = document.getElementById('workspace');
+    const paperScaler = document.getElementById('paper-scaler');
+    const paperStage = document.getElementById('paper-stage');
+    const pageGuides = document.getElementById('page-guides');
+    const pageCounter = document.getElementById('page-counter');
+    const authorInput = document.getElementById('author-footer');
+    const dateInput = document.getElementById('doc-date');
+    const todayBtn = document.getElementById('today-btn');
 
     // Prevent toolbar taps from stealing focus and clearing blue text highlights
     toolbarEl.addEventListener('mousedown', (e) => {
       e.preventDefault();
     });
 
-    // 3. Mobile-Safe Selection Memory + Font Size Dropdown + Gboard Typing Lock
+    // 5. Undo, Redo & Manual Page Break Buttons
+    const undoBtn = document.getElementById('undo-btn');
+    const redoBtn = document.getElementById('redo-btn');
+    const pageBreakBtn = document.getElementById('page-break-btn');
+
+    undoBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      deselectImage();
+      quill.history.undo();
+      scheduleLayoutUpdate();
+    });
+
+    redoBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      deselectImage();
+      quill.history.redo();
+      scheduleLayoutUpdate();
+    });
+
+    pageBreakBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      deselectImage();
+
+      const current = quill.getSelection();
+      const target = current ? current : savedRange;
+      let index = target ? target.index : Math.max(0, quill.getLength() - 1);
+
+      if (target && target.length > 0) {
+        quill.deleteText(index, target.length, 'user');
+      }
+
+      if (index > 0) {
+        const prevChar = quill.getText(index - 1, 1);
+        if (prevChar !== '\n') {
+          quill.insertText(index, '\n', 'user');
+          index += 1;
+        }
+      }
+
+      quill.insertEmbed(index, 'pageBreak', true, 'user');
+
+      if (index + 1 >= quill.getLength() - 1) {
+        quill.insertText(index + 1, '\n', 'silent');
+      }
+
+      quill.setSelection(index + 1, 0, 'silent');
+      savedRange = { index: index + 1, length: 0 };
+      scheduleLayoutUpdate();
+    });
+
+    // Allow tapping the "×" button on any Page Break bar to delete it
+    editorEl.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('.ql-page-break-remove');
+      if (removeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const breakEl = removeBtn.closest('.ql-page-break');
+        if (breakEl) {
+          const blot = Quill.find(breakEl);
+          if (blot) {
+            const idx = quill.getIndex(blot);
+            quill.deleteText(idx, 1, 'user');
+            scheduleLayoutUpdate();
+          }
+        }
+      }
+    });
+
+    // 6. View Mode Dropdown (Mobile / Full Page / Desktop)
+    const viewPicker = document.getElementById('view-picker');
+    const viewTrigger = document.getElementById('view-picker-trigger');
+    const viewLabel = document.getElementById('view-picker-label');
+    const viewOptions = document.querySelectorAll('.view-option');
+
+    const VIEW_LABELS = {
+      mobile: 'Mobile',
+      fullpage: 'Full Page',
+      desktop: 'Desktop'
+    };
+
+    let currentViewMode = window.innerWidth <= 768 ? 'mobile' : 'desktop';
+
+    function closeViewMenu() {
+      viewPicker.classList.remove('open');
+      viewTrigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function applyViewMode(mode) {
+      currentViewMode = mode;
+      document.body.classList.remove('view-mobile', 'view-fullpage', 'view-desktop');
+      document.body.classList.add(`view-${mode}`);
+      viewLabel.textContent = VIEW_LABELS[mode] || 'Desktop';
+
+      viewOptions.forEach((opt) => {
+        opt.classList.toggle('active', opt.dataset.view === mode);
+      });
+
+      scheduleLayoutUpdate(true);
+    }
+
+    function updateFullPageScale() {
+      if (currentViewMode !== 'fullpage') {
+        paperStage.style.transform = '';
+        paperScaler.style.width = '';
+        paperScaler.style.height = '';
+        return;
+      }
+
+      const availWidth = Math.max(240, workspaceEl.clientWidth - 24);
+      const scale = Math.min(1, availWidth / 794);
+      const stageHeight = paperStage.offsetHeight || 1123;
+
+      paperStage.style.transform = `scale(${scale})`;
+      paperScaler.style.width = `${Math.round(794 * scale)}px`;
+      paperScaler.style.height = `${Math.ceil(stageHeight * scale)}px`;
+    }
+
+    viewTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeSizeMenu();
+      const isOpen = viewPicker.classList.toggle('open');
+      viewTrigger.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    viewOptions.forEach((opt) => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyViewMode(opt.dataset.view);
+        closeViewMenu();
+      });
+    });
+
+    // 7. Mobile-Safe Selection Memory + Font Size Dropdown + Gboard Typing Lock
     const sizePicker = document.getElementById('custom-size-picker');
     const sizeTrigger = document.getElementById('size-picker-trigger');
     const sizeLabel = document.getElementById('size-picker-label');
@@ -601,21 +1240,18 @@
       sizeTrigger.setAttribute('aria-expanded', 'false');
     }
 
-    // Track the latest non-null selection inside the editor
     quill.on('selection-change', (range, oldRange, source) => {
       if (!range) return;
 
       savedRange = { index: range.index, length: range.length };
 
       if (source === 'user') {
-        // Keep locked size if user taps back on the exact same cursor spot
         if (sizeLocked && range.length === 0 && range.index === lockedCursorIndex) {
           quill.format('size', activeSize, 'silent');
           updateSizeDropdownUI(activeSize);
           return;
         }
 
-        // Otherwise sync dropdown to the text at the new cursor/selection
         sizeLocked = false;
         lockedCursorIndex = null;
         const currentFormat = quill.getFormat(range);
@@ -624,10 +1260,10 @@
       }
     });
 
-    // Toggle Font Size dropdown without dropping highlight
     sizeTrigger.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      closeViewMenu();
       const current = quill.getSelection();
       if (current) {
         savedRange = { index: current.index, length: current.length };
@@ -636,7 +1272,6 @@
       sizeTrigger.setAttribute('aria-expanded', String(isOpen));
     });
 
-    // Apply chosen Font Size cleanly to selected text OR lock for new typing
     sizeOptions.forEach((opt) => {
       opt.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -652,7 +1287,6 @@
         updateSizeDropdownUI(newSize);
 
         if (target && target.length > 0) {
-          // Resize highlighted word(s) and keep them selected
           sizeLocked = false;
           lockedCursorIndex = null;
           isFormattingInternally = true;
@@ -661,7 +1295,6 @@
           isFormattingInternally = false;
           savedRange = { index: target.index, length: target.length };
         } else {
-          // Lock chosen size at blinking cursor so mobile keyboard won't reset to 16px
           const cursorIdx = target ? target.index : Math.max(0, quill.getLength() - 1);
           sizeLocked = true;
           lockedCursorIndex = cursorIdx;
@@ -671,13 +1304,17 @@
           isFormattingInternally = false;
           savedRange = { index: cursorIdx, length: 0 };
         }
+        scheduleLayoutUpdate();
       });
     });
 
-    // Close dropdown when tapping anywhere outside it
+    // Close open menus when tapping outside
     document.addEventListener('pointerdown', (e) => {
       if (!sizePicker.contains(e.target)) {
         closeSizeMenu();
+      }
+      if (!viewPicker.contains(e.target)) {
+        closeViewMenu();
       }
     });
 
@@ -689,6 +1326,7 @@
         lockedCursorIndex = null;
         activeSize = '16px';
         updateSizeDropdownUI('16px');
+        scheduleLayoutUpdate();
       });
     }
 
@@ -703,6 +1341,7 @@
       isComposing = false;
       if (!sizeLocked || compStartIndex === null) {
         compStartIndex = null;
+        scheduleLayoutUpdate();
         return;
       }
 
@@ -720,12 +1359,15 @@
           lockedCursorIndex = endIdx;
           savedRange = { index: endIdx, length: 0 };
         }
+        scheduleLayoutUpdate();
       }, 0);
     });
 
-    // Enforce locked font size on direct character typing (numbers, spaces, desktop typing)
+    // Enforce locked font size on direct character typing
     quill.on('text-change', (delta, oldDelta, source) => {
-      updatePageGuides();
+      if (!isComposing) {
+        scheduleLayoutUpdate();
+      }
 
       if (source !== 'user' || isFormattingInternally || isComposing || !sizeLocked) {
         return;
@@ -766,46 +1408,162 @@
       }
     });
 
-    // 4. Live Footer Preview (Page Number Left | Date Center | Author Right)
-    const PAGE_HEIGHT = 1123; // A4 height at 96 DPI
-    const pageGuides = document.getElementById('page-guides');
-    const paperStage = document.getElementById('paper-stage');
-    const pageCounter = document.getElementById('page-counter');
-    const authorInput = document.getElementById('author-footer');
-    const dateInput = document.getElementById('doc-date');
-    const todayBtn = document.getElementById('today-btn');
+    // 8. Tap-to-Resize Image Controls
+    const imgResizeBar = document.getElementById('img-resize-bar');
+    const imgDecBtn = document.getElementById('img-dec-btn');
+    const imgIncBtn = document.getElementById('img-inc-btn');
+    const imgSizeReadout = document.getElementById('img-size-readout');
+    const imgPresetBtns = document.querySelectorAll('.img-preset-btn');
+    const imgAlignBtns = document.querySelectorAll('.img-align-btn');
+    const imgDeleteBtn = document.getElementById('img-delete-btn');
+    const imgDoneBtn = document.getElementById('img-done-btn');
 
-    todayBtn.addEventListener('click', () => {
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2, '0');
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const yyyy = now.getFullYear();
-      dateInput.value = `${dd}/${mm}/${yyyy}`;
-      updatePageGuides();
+    let selectedImg = null;
+
+    function getImageWidthPercent(img) {
+      if (img.style.width && img.style.width.endsWith('%')) {
+        return Math.max(15, Math.min(100, Math.round(parseFloat(img.style.width))));
+      }
+      const parentWidth = img.parentElement ? img.parentElement.clientWidth : 682;
+      if (parentWidth > 0 && img.offsetWidth > 0) {
+        return Math.max(15, Math.min(100, Math.round((img.offsetWidth / parentWidth) * 100)));
+      }
+      return 100;
+    }
+
+    function syncImageBarUI() {
+      if (!selectedImg) return;
+      const pct = getImageWidthPercent(selectedImg);
+      const align = selectedImg.dataset.align || 'left';
+
+      imgSizeReadout.textContent = `${pct}%`;
+      imgPresetBtns.forEach((btn) => {
+        btn.classList.toggle('active', Number(btn.dataset.pct) === pct);
+      });
+      imgAlignBtns.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.align === align);
+      });
+    }
+
+    function selectImage(img) {
+      if (selectedImg && selectedImg !== img) {
+        selectedImg.classList.remove('selected-img');
+      }
+      selectedImg = img;
+      selectedImg.classList.add('selected-img');
+      imgResizeBar.classList.add('visible');
+      syncImageBarUI();
+    }
+
+    function deselectImage() {
+      if (selectedImg) {
+        selectedImg.classList.remove('selected-img');
+        selectedImg = null;
+      }
+      imgResizeBar.classList.remove('visible');
+    }
+
+    function setSelectedImageSize(pct) {
+      if (!selectedImg) return;
+      const clamped = Math.max(15, Math.min(100, Math.round(pct)));
+      const blot = Quill.find(selectedImg);
+      if (blot && typeof blot.format === 'function') {
+        blot.format('width', `${clamped}%`);
+      } else {
+        selectedImg.style.width = `${clamped}%`;
+        selectedImg.style.height = 'auto';
+      }
+      syncImageBarUI();
+      scheduleLayoutUpdate(true);
+    }
+
+    function setSelectedImageAlign(align) {
+      if (!selectedImg) return;
+      const blot = Quill.find(selectedImg);
+      if (blot && typeof blot.format === 'function') {
+        blot.format('align', align);
+      }
+      syncImageBarUI();
+    }
+
+    editorEl.addEventListener('click', (e) => {
+      if (e.target && e.target.tagName === 'IMG') {
+        e.stopPropagation();
+        selectImage(e.target);
+      } else if (!e.target.closest('.ql-page-break-remove')) {
+        deselectImage();
+      }
     });
 
-    function updatePageGuides() {
-      const contentHeight = editorEl.scrollHeight;
-      const totalPages = Math.max(1, Math.ceil(contentHeight / PAGE_HEIGHT));
-      const authorText = authorInput.value.trim();
-      const dateText = dateInput.value.trim();
+    document.addEventListener('click', (e) => {
+      if (!selectedImg) return;
+      if (e.target === selectedImg || imgResizeBar.contains(e.target)) return;
+      deselectImage();
+    });
 
-      paperStage.style.minHeight = `${totalPages * PAGE_HEIGHT}px`;
-      pageCounter.textContent = totalPages === 1 ? 'Page 1' : `${totalPages} Pages`;
+    imgDecBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!selectedImg) return;
+      setSelectedImageSize(getImageWidthPercent(selectedImg) - 10);
+    });
 
-      let guidesHTML = '';
-      for (let i = 1; i <= totalPages; i++) {
-        guidesHTML += `
-          <div class="page-guide-slot">
-            <div class="page-guide-footer">
-              <span class="footer-left">Page ${i}</span>
-              <span class="footer-center">${dateText ? 'Date: ' + escapeHtml(dateText) : ''}</span>
-              <span class="footer-right">${escapeHtml(authorText)}</span>
-            </div>
-          </div>
-        `;
+    imgIncBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!selectedImg) return;
+      setSelectedImageSize(getImageWidthPercent(selectedImg) + 10);
+    });
+
+    imgPresetBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setSelectedImageSize(Number(btn.dataset.pct));
+      });
+    });
+
+    imgAlignBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setSelectedImageAlign(btn.dataset.align);
+      });
+    });
+
+    imgDeleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!selectedImg) return;
+      const blot = Quill.find(selectedImg);
+      deselectImage();
+      if (blot) {
+        const idx = quill.getIndex(blot);
+        quill.deleteText(idx, 1, 'user');
+        scheduleLayoutUpdate(true);
       }
-      pageGuides.innerHTML = guidesHTML;
+    });
+
+    imgDoneBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deselectImage();
+    });
+
+    // Catch newly loaded images in capture phase so tall photos fit & auto-push cleanly
+    editorEl.addEventListener('load', (e) => {
+      if (e.target && e.target.tagName === 'IMG') {
+        scheduleLayoutUpdate(true);
+      }
+    }, true);
+
+    // 9. Visible Page Dividers, Auto-Push Overflowing Images & Footer Preview
+    const PAGE_HEIGHT = 1123; // A4 height at 96 DPI
+    const GAP_HEIGHT = 28;    // Visible gray divider band between pages
+    const SLOT_STRIDE = PAGE_HEIGHT + GAP_HEIGHT;
+    const BOTTOM_PAD = 88;    // Reserved space for footer + breathing room
+
+    let layoutRafId = null;
+    let isUpdatingLayout = false;
+    let lastGuidesKey = '';
+    let lastMeasuredHeight = 0;
+
+    function getTopPad() {
+      return currentViewMode === 'mobile' ? 40 : 56;
     }
 
     function escapeHtml(str) {
@@ -816,16 +1574,187 @@
         .replace(/"/g, '&quot;');
     }
 
-    const resizeObserver = new ResizeObserver(updatePageGuides);
-    resizeObserver.observe(editorEl);
-    authorInput.addEventListener('input', updatePageGuides);
-    dateInput.addEventListener('input', updatePageGuides);
-    updatePageGuides();
+    function scheduleLayoutUpdate(forceGuides = false) {
+      if (forceGuides) lastGuidesKey = '';
+      if (layoutRafId) cancelAnimationFrame(layoutRafId);
+      layoutRafId = requestAnimationFrame(() => {
+        layoutRafId = null;
+        applyPageFlow();
+      });
+    }
 
-    // 5. Generate & Download PDF with Page Number, Date, and Author on Every Page Footer
+    function applyPageFlow() {
+      if (isUpdatingLayout) return;
+      isUpdatingLayout = true;
+
+      try {
+        const topPad = getTopPad();
+        const printableHeight = PAGE_HEIGHT - topPad - BOTTOM_PAD;
+        const children = Array.from(editorEl.children);
+
+        // 1. Reset temporary page pushes to measure natural positions
+        for (const child of children) {
+          if (child.dataset.pagePush) {
+            child.style.marginTop = '';
+            delete child.dataset.pagePush;
+          }
+        }
+
+        // 2. Push manual page breaks, overflowing images, and divider-crossing blocks cleanly to the next page
+        let forcedMinPage = 0;
+        let maxPageIndex = 0;
+
+        for (const child of children) {
+          let top = child.offsetTop;
+          const height = child.offsetHeight;
+          let pageIdx = Math.floor(top / SLOT_STRIDE);
+
+          // If previous element was a manual Page Break, start on forcedMinPage
+          if (pageIdx < forcedMinPage) {
+            const targetTop = forcedMinPage * SLOT_STRIDE + topPad;
+            const push = Math.max(0, targetTop - top);
+            if (push > 0) {
+              child.style.marginTop = `${push}px`;
+              child.dataset.pagePush = '1';
+              top = child.offsetTop;
+              pageIdx = Math.floor(top / SLOT_STRIDE);
+            }
+          }
+
+          const pageStart = pageIdx * SLOT_STRIDE;
+          const contentTopLimit = pageStart + topPad;
+          const contentBottomLimit = pageStart + PAGE_HEIGHT - BOTTOM_PAD;
+          const bottom = top + height;
+
+          const isPageBreak = child.classList.contains('ql-page-break');
+          const hasImage = Boolean(child.querySelector('img'));
+          const isHeading = /^H[1-6]$/.test(child.tagName);
+
+          // If block starts in footer/divider/top-margin zone, push to clean top of page
+          if (top > contentBottomLimit) {
+            const targetTop = (pageIdx + 1) * SLOT_STRIDE + topPad;
+            const push = targetTop - top;
+            if (push > 0) {
+              child.style.marginTop = `${push}px`;
+              child.dataset.pagePush = '1';
+              top = child.offsetTop;
+              pageIdx = Math.floor(top / SLOT_STRIDE);
+            }
+          } else if (pageIdx > 0 && top < contentTopLimit) {
+            const push = contentTopLimit - top;
+            if (push > 0) {
+              child.style.marginTop = `${push}px`;
+              child.dataset.pagePush = '1';
+              top = child.offsetTop;
+              pageIdx = Math.floor(top / SLOT_STRIDE);
+            }
+          } else if (bottom > contentBottomLimit) {
+            // Block crosses into footer/divider:
+            // Always push image blocks, headings, or normal short blocks whole to next page
+            const shouldKeepTogether =
+              (hasImage && height <= printableHeight + 12) ||
+              (isHeading && height <= printableHeight) ||
+              (!hasImage && height <= 220);
+
+            if (shouldKeepTogether) {
+              const targetTop = (pageIdx + 1) * SLOT_STRIDE + topPad;
+              const push = targetTop - top;
+              if (push > 0) {
+                child.style.marginTop = `${push}px`;
+                child.dataset.pagePush = '1';
+                top = child.offsetTop;
+                pageIdx = Math.floor(top / SLOT_STRIDE);
+              }
+            }
+          }
+
+          if (isPageBreak) {
+            forcedMinPage = pageIdx + 1;
+            maxPageIndex = Math.max(maxPageIndex, forcedMinPage);
+          } else {
+            const finalBottom = child.offsetTop + child.offsetHeight;
+            const endPageIdx = Math.floor(Math.max(0, finalBottom - 1) / SLOT_STRIDE);
+            maxPageIndex = Math.max(maxPageIndex, pageIdx, endPageIdx);
+          }
+        }
+
+        // 3. Render visible white page cards + gray page dividers + footers
+        const totalPages = Math.max(1, maxPageIndex + 1);
+        const totalStageHeight = totalPages * PAGE_HEIGHT + (totalPages - 1) * GAP_HEIGHT;
+        const authorText = authorInput.value.trim();
+        const dateText = dateInput.value.trim();
+
+        paperStage.style.minHeight = `${totalStageHeight}px`;
+        editorEl.style.minHeight = `${totalStageHeight}px`;
+        pageCounter.textContent = totalPages === 1 ? 'Page 1' : `${totalPages} Pages`;
+
+        const guidesKey = `${totalPages}|${dateText}|${authorText}|${currentViewMode}`;
+        if (guidesKey !== lastGuidesKey) {
+          lastGuidesKey = guidesKey;
+          let guidesHTML = '';
+          for (let i = 1; i <= totalPages; i++) {
+            guidesHTML += `
+              <div class="page-sheet-card">
+                <div class="page-guide-footer">
+                  <span class="footer-left">Page ${i}</span>
+                  <span class="footer-center">${dateText ? 'Date: ' + escapeHtml(dateText) : ''}</span>
+                  <span class="footer-right">${escapeHtml(authorText)}</span>
+                </div>
+              </div>
+            `;
+            if (i < totalPages) {
+              guidesHTML += `<div class="page-divider-gap">Page ${i + 1}</div>`;
+            }
+          }
+          pageGuides.innerHTML = guidesHTML;
+        }
+
+        lastMeasuredHeight = editorEl.scrollHeight;
+        updateFullPageScale();
+      } finally {
+        requestAnimationFrame(() => {
+          isUpdatingLayout = false;
+        });
+      }
+    }
+
+    todayBtn.addEventListener('click', () => {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      dateInput.value = `${dd}/${mm}/${yyyy}`;
+      scheduleLayoutUpdate(true);
+    });
+
+    authorInput.addEventListener('input', () => scheduleLayoutUpdate(true));
+    dateInput.addEventListener('input', () => scheduleLayoutUpdate(true));
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (isUpdatingLayout || isComposing) return;
+      if (Math.abs(editorEl.scrollHeight - lastMeasuredHeight) > 2) {
+        scheduleLayoutUpdate();
+      }
+    });
+    resizeObserver.observe(editorEl);
+
+    window.addEventListener('resize', () => {
+      if (currentViewMode === 'fullpage') {
+        updateFullPageScale();
+      } else if (currentViewMode === 'mobile') {
+        scheduleLayoutUpdate();
+      }
+    });
+
+    // Apply initial view mode (Mobile on phones, Desktop on computers)
+    applyViewMode(currentViewMode);
+
+    // 10. Generate & Download PDF with Page Number, Date, Author & No Split Images
     const generateBtn = document.getElementById('generate-pdf-btn');
 
     generateBtn.addEventListener('click', async () => {
+      deselectImage();
+
       const rawTitle = document.getElementById('doc-title').value.trim() || 'yourdoc-document';
       const safeFileName = rawTitle.replace(/[^a-zA-Z0-9-_ ]/g, '').trim() || 'yourdoc-document';
       const authorText = authorInput.value.trim();
@@ -840,6 +1769,21 @@
       const exportContent = document.createElement('div');
       exportContent.className = 'ql-editor';
       exportContent.innerHTML = editorEl.innerHTML;
+
+      // Strip live-editor visual push margins & image selection rings before PDF export
+      exportContent.querySelectorAll('[data-page-push]').forEach((el) => {
+        el.style.marginTop = '';
+        el.removeAttribute('data-page-push');
+      });
+
+      exportContent.querySelectorAll('img').forEach((img) => {
+        img.classList.remove('selected-img');
+        const parentBlock = img.closest('p, div');
+        if (parentBlock && parentBlock !== exportContent) {
+          parentBlock.classList.add('pdf-img-block');
+        }
+      });
+
       exportWrapper.appendChild(exportContent);
 
       const options = {
@@ -847,7 +1791,11 @@
         filename: `${safeFileName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        pagebreak: { mode: ['css', 'legacy'] },
+        pagebreak: {
+          mode: ['css', 'legacy'],
+          after: '.ql-page-break',
+          avoid: ['img', '.pdf-img-block', 'h1', 'h2', 'h3', 'li']
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
