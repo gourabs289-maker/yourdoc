@@ -1,11 +1,37 @@
 * { box-sizing: border-box; }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+body {
   font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   background: #dce3ec;
   color: #1f2937;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Block accidental double-tap zoom on all interactive controls */
+button,
+input,
+select,
+.ql-toolbar,
+.ql-toolbar button,
+.ql-toolbar .ql-picker-label,
+.ql-toolbar .ql-picker-item,
+.size-picker-trigger,
+.size-option,
+.view-picker-trigger,
+.view-option,
+.img-bar-btn {
+  touch-action: manipulation;
 }
 
 /* Top App Header */
@@ -13,6 +39,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 120;
+  width: 100%;
   background: #ffffff;
   border-bottom: 1px solid #d1d5db;
   padding: 10px 16px;
@@ -38,11 +65,12 @@ body {
   letter-spacing: -0.3px;
 }
 
+/* 16px input font prevents mobile browsers from auto-zooming on focus */
 .doc-input {
-  padding: 7px 10px;
+  padding: 6px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
   width: 170px;
 }
@@ -170,6 +198,7 @@ body {
   position: sticky;
   top: 57px;
   z-index: 110;
+  width: 100%;
   background: #f8fafc;
   border-bottom: 1px solid #d1d5db;
 }
@@ -315,17 +344,18 @@ body {
   flex-wrap: wrap;
 }
 
+/* 16px prevents mobile browser zoom when tapping Date or Author box */
 .meta-field input {
-  padding: 6px 10px;
+  padding: 5px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 5px;
-  font-size: 13px;
+  font-size: 16px;
   outline: none;
 }
 
 .meta-field input:focus { border-color: #2563eb; }
 
-#doc-date { width: 145px; }
+#doc-date { width: 150px; }
 #author-footer { width: 230px; max-width: 100%; }
 
 .btn-today {
@@ -359,12 +389,14 @@ body {
   z-index: 500 !important;
 }
 
-/* Workspace & View Modes */
+/* Workspace & View Modes (isolated so switching view never shifts outer browser zoom) */
 .workspace {
   position: relative;
   z-index: 1;
+  width: 100%;
   padding: 24px 12px 90px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .paper-scaler {
@@ -383,6 +415,7 @@ body {
 /* Desktop View */
 body.view-desktop .workspace {
   overflow-x: auto;
+  touch-action: pan-x pan-y;
 }
 body.view-desktop .paper-scaler {
   width: 794px;
@@ -396,6 +429,7 @@ body.view-desktop .paper-stage {
 body.view-fullpage .workspace {
   overflow-x: hidden;
   padding: 18px 12px 90px;
+  touch-action: pan-y;
 }
 body.view-fullpage .paper-stage {
   width: 794px;
@@ -405,6 +439,7 @@ body.view-fullpage .paper-stage {
 body.view-mobile .workspace {
   overflow-x: hidden;
   padding: 16px 10px 90px;
+  touch-action: pan-y;
 }
 body.view-mobile .paper-scaler {
   width: 100%;
