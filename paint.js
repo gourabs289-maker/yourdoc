@@ -663,7 +663,7 @@
 
   // 5. Canvas & State Initialization (Crisp 2x Hi-DPI Canvas)
   const LOGICAL_W = 760;
-  const LOGICAL_H = 560;
+  const LOGICAL_H = window.innerWidth <= 768 ? 1120 : 560;
   const SCALE = 2;
 
   const canvasWrap = document.getElementById('paint-canvas-wrap');
